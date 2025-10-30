@@ -1,0 +1,640 @@
+{
+  "name": "Workflow Automatización Concesionario",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un asistente especializado en gestión de concesionarios de coches.\n  Tu única tarea es analizar el mensaje del gestor y devolver un JSON **puro y válido**, \n  sin texto antes o después. No agregues explicaciones ni comentarios fuera del JSON.\n\nformato_salida_obligatorio:\n  accion: \"consultar_stock | insertar_coche | eliminar_coche | actualizar_datos\"\n  query: \"SQL query válida o null\"\n  detalles:\n    marca: \"string | null\"\n    modelo: \"string | null\"\n    anio: \"number | null\"\n    version: \"string | null\"\n    tipo_carroceria: \"string | null\"\n    motor: \"string | null\"\n    cilindrada: \"string | null\"\n    potencia_hp: \"number | null\"\n    color: \"string | null\"\n    precio: \"number | null\"\n    puertas: \"number | null\"\n    descripcion: \"string | null\"\n    kilometraje: \"string | null\"\n    fecha_llegada: \"string | null\"\n    fecha_venta: \"string | null\"\n    estado: \"string | null\"\n    notas: \"string | null\"\n    matricula: \"string | null\"\n    img_url: \"string | null\"\n    transmision: \"string | null\"\n\nreglas_para_generacion_de_sql:\n  consultar_stock:\n    descripcion: \"Genera SELECT * FROM public.coches WHERE ...; usando los campos disponibles (marca, modelo, color, anio, precio, estado).\"\n    sin_filtros: \"SELECT * FROM public.coches WHERE estado='Disponible';\"\n\n  insertar_coche:\n    descripcion: \"Genera INSERT INTO public.coches (...) VALUES (...) RETURNING *; incluyendo siempre fecha_llegada=NOW(). Si algún campo falta, usa NULL. El estado por defecto será 'Disponible'. La fecha_venta debe ser NULL.\"\n\n  eliminar_coche:\n    descripcion: >\n      Si el mensaje indica eliminación total, genera UPDATE public.coches\n      SET estado='Eliminado' WHERE ... RETURNING *;\n      Si el mensaje indica que el coche se ha vendido, genera\n      UPDATE public.coches SET estado='Vendido', fecha_venta=NOW()\n      WHERE ... RETURNING *;\n\n  actualizar_datos:\n    descripcion: \"Genera UPDATE public.coches SET campo=valor,... WHERE ... RETURNING *; Ignora campos faltantes. Usa matricula en WHERE si está disponible.\"\n\ninstrucciones_accion:\n  - accion: \"consultar_stock\"\n    criterios: \"ver, mostrar, listar, filtrar, buscar coches en stock.\"\n  - accion: \"insertar_coche\"\n    criterios: \"añadir, registrar, ingresar un nuevo coche.\"\n  - accion: \"eliminar_coche\"\n    criterios: \"eliminar, borrar, quitar un coche del stock o marcar como vendido.\"\n  - accion: \"actualizar_datos\"\n    criterios: \"modificar, actualizar, cambiar datos de un coche existente.\"\n\nnotas:\n  - \"Devuelve siempre los datos del coche en 'detalles', usando null para campos no mencionados.\"\n  - \"Nunca agregues notas ni comentarios fuera del JSON.\"\n  - \"Nunca pongas 'query: null' si hay datos suficientes para generar SQL.\"\n  - \"Cuando un coche se venda, 'fecha_venta' debe actualizarse automáticamente con NOW().\"\n\nmensaje_gestor: \"{{ $json.message }} | Imagen: {{ $json.img_url }}\"",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        208
+      ],
+      "id": "c3ae24e7-ffc0-4829-a004-17bcfb30a9cd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        352,
+        432
+      ],
+      "id": "5749e86a-f1fb-41b9-ad38-a0573b444613",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Mistral Cloud)"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        448
+      ],
+      "id": "9d2e3648-dbd2-45b8-bfa8-46500ce4a98d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "consultar_stock",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3802e01b-e8ab-431f-b483-3a53d5bed051"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "consultar_stock"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dcba2cf4-3687-4dc2-a419-96627bc614be",
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "insertar_coche",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "insertar_coche"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c63a590e-1e7f-41fe-9376-5c3eb91b975b",
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "eliminar_coche",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "eliminar_coche"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f97f9d4d-632d-4a69-a8db-2ad79dff9a14",
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "actualizar_datos",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "actualizar_datoss"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1008,
+        176
+      ],
+      "id": "7552b95c-beb2-45ae-a037-9f7f25c1b76d",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1232,
+        -80
+      ],
+      "id": "bb40911d-0cad-434a-8d7a-be22a9f7ea21",
+      "name": "Consultar Stock",
+      "credentials": {
+        "postgres": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Postgres)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1232,
+        112
+      ],
+      "id": "84e746ad-f28f-4023-8b8f-536a2f006219",
+      "name": "Insertar stock",
+      "credentials": {
+        "postgres": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Postgres)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1232,
+        304
+      ],
+      "id": "e848cccf-a1fd-4468-9028-01c85b227e42",
+      "name": "Eliminar stock",
+      "credentials": {
+        "postgres": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Postgres)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1232,
+        496
+      ],
+      "id": "d2b53691-406c-49cf-9d59-0ae835d13913",
+      "name": "Actualizar datos stock",
+      "credentials": {
+        "postgres": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Postgres)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -592,
+        192
+      ],
+      "id": "7eac5057-945c-4a26-8fd8-5f1231aee424",
+      "name": "Telegram Trigger",
+      "webhookId": "<TO_BE_DEFINED>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Telegram API)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ec5e7875-93e5-48cc-9549-81df13342c8e",
+              "leftValue": "={{ $json.message.photo[3].file_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -384,
+        192
+      ],
+      "id": "4880288c-ed24-4996-919c-79a7f7ac2aac",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getFile?file_id={{ $json.message.photo[3].file_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "c6acada6-907d-43ac-be78-b175072bc20d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1712,
+        208
+      ],
+      "id": "b8e0baa6-dae5-4308-a8d6-25c10dc92a35",
+      "name": "Send a text message",
+      "webhookId": "<TO_BE_DEFINED>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Telegram API)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4d6b04e5-4dc8-4b65-93f5-5bdae6caceb5",
+              "name": "img_url",
+              "value": "=https://api.telegram.org/file/bot<TELEGRAM_BOT_TOKEN>/{{ $json.result.file_path }}",
+              "type": "string"
+            },
+            {
+              "id": "70ceff6b-01be-4697-bbe7-cd626685ea37",
+              "name": "=message",
+              "value": "={{ $('Telegram Trigger').item.json.message.caption }}",
+              "type": "string"
+            },
+            {
+              "id": "b7ee49b6-99a7-468a-bb0d-19b91627418b",
+              "name": "sessionId",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        0
+      ],
+      "id": "13005bb6-b977-4bc3-b1f5-fcc1bb660335",
+      "name": "Edit Fields Si hay Imagen"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "95838e80-fb2c-41fc-9184-2d40807fa7b5",
+              "name": "sessionId",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "f1c33480-1fb7-4398-b975-6a6355438764",
+              "name": "message",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        208
+      ],
+      "id": "7050cb21-f583-4378-baab-dbd398b41081",
+      "name": "Edit Fields Si No hay Imagen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtenemos todos los items del nodo PostgreSQL\nconst items = $items(); \n\n// Extraemos cada coche\nconst coches = items.map(item => item.json);\n\nconst accion = $('Codigo para coger la accion y query devuelta por el AI Agent').first().json.accion || \"desconocida\";\nconst sessionId = $('Codigo para coger la accion y query devuelta por el AI Agent').first().json.sessionId || null;\n\n// Formateamos mensaje según la acción\nlet mensaje = \"\";\n\nif (accion === \"consultar_stock\") {\n  if (coches.length === 0) {\n    mensaje = \"🚗 No hay coches en stock que coincidan con la consulta.\";\n  } else {\n    mensaje = \"🚗 Consulta de stock actual:\\n\\n\";\n    coches.forEach(coche => {\n      const marca = coche.marca || \"No disponible\";\n      const modelo = coche.modelo || \"No disponible\";\n      const anio = coche.año || coche.anio || \"No disponible\";\n      const precio = coche.precio ? Number(coche.precio).toLocaleString(\"es-ES\", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + \"€\" : \"No disponible\";\n      mensaje += `• 🚗 ${marca} ${modelo} (${anio}) - Precio: ${precio}\\n`;\n    });\n    mensaje += `\\nTotal de coches: ${coches.length}`;\n  }\n}\nelse if (accion === \"insertar_coche\") {\n  const coche = coches[0];\n  mensaje = `✅ 🚗 Coche insertado exitosamente: ${coche.marca} ${coche.modelo} (${coche.anio}) – Precio: ${coche.precio}€`;\n}\nelse if (accion === \"eliminar_coche\") {\n  const coche = coches[0];\n  const estado = coche.estado ? coche.estado.toLowerCase() : \"\";\n\n  if (estado === \"vendido\") {\n    mensaje = `💰 🚗 Coche vendido: ${coche.marca} ${coche.modelo} (${coche.anio}).`;\n  } else if (estado === \"eliminado\") {\n    mensaje = `🗑️ 🚗 Coche eliminado: ${coche.marca} ${coche.modelo} (${coche.anio}).`;\n  }\n}\nelse if (accion === \"actualizar_datos\") {\n  const coche = coches[0];\n  mensaje = `🔧 🚗 Coche actualizado: ${coche.marca} ${coche.modelo} (${coche.anio}) – Precio: ${coche.precio}€`;\n}\nelse {\n  mensaje = \"🚗 Error: acción no reconocida.\";\n}\n\n// Devolvemos mensaje y chatId para Telegram\nreturn [{ json: { mensaje: mensaje, chatId: sessionId } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        208
+      ],
+      "id": "5c3822f6-422a-4d9d-9605-2d9689c065ee",
+      "name": "Codigo para devolver la respuesta en buen formato al usuario"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener el JSON del AI Agent\nlet raw = $json.output || $json.data || JSON.stringify($json);\n\nlet parsed;\ntry {\n  parsed = typeof raw === \"string\" ? JSON.parse(raw) : raw;\n} catch (error) {\n  throw new Error(\"Error al parsear JSON: \" + error.message + \" | Valor: \" + raw);\n}\n\n// Buscar el sessionId desde cualquiera de los nodos que puedan tenerlo\nlet sessionId = null;\n\ntry {\n  sessionId = $('Edit Fields Si No hay Imagen').first().json.sessionId;\n} catch (e) {}\n\nif (!sessionId) {\n  try {\n    sessionId = $('Edit Fields Si hay Imagen').first().json.sessionId;\n  } catch (e) {}\n}\n\n// Devolver salida combinada\nreturn [\n  {\n    json: {\n      ...parsed,\n      sessionId: sessionId || null, // mantener null si no hay ninguno\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        208
+      ],
+      "id": "fe450cbd-3efc-4eca-abb7-c24f6e696aa0",
+      "name": "Codigo para coger la accion y query devuelta por el AI Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Codigo para coger la accion y query devuelta por el AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Consultar Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insertar stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Eliminar stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar datos stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Stock": {
+      "main": [
+        [
+          {
+            "node": "Codigo para devolver la respuesta en buen formato al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar stock": {
+      "main": [
+        [
+          {
+            "node": "Codigo para devolver la respuesta en buen formato al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eliminar stock": {
+      "main": [
+        [
+          {
+            "node": "Codigo para devolver la respuesta en buen formato al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar datos stock": {
+      "main": [
+        [
+          {
+            "node": "Codigo para devolver la respuesta en buen formato al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields Si No hay Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Si hay Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Si hay Imagen": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Si No hay Imagen": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Codigo para devolver la respuesta en buen formato al usuario": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Codigo para coger la accion y query devuelta por el AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f4508bfa-fab0-4b4f-88fa-aa424f773cac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "<INSTANCE_ID>"
+  },
+  "id": "4q9IbpFiH9MFt10k",
+  "tags": []
+}

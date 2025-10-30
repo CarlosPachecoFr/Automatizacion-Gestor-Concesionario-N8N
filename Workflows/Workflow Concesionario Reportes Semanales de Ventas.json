@@ -1,0 +1,131 @@
+{
+  "name": "Workflow Concesionario Reportes Semanales de Ventas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "aef2967e-aac4-4f8c-83ac-3d4d89631231",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "<EMAIL_DESTINO>",
+        "subject": "=Reporte de Ventas Semanal {{ $now.toFormat(\"yyyy-LL-dd\") }}",
+        "message": "={{ $json.htmlBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        608,
+        0
+      ],
+      "id": "0b6a5724-8e45-48e5-87cc-ac864b8948b5",
+      "name": "Send a message",
+      "webhookId": "af7c8786-d71d-44d8-b12b-8b2130b8a093",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Gmail OAuth2)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * \nFROM public.coches\nWHERE fecha_venta >= NOW() - INTERVAL '7 days';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "da66e465-be68-496c-8cf9-bbd03d12ae28",
+      "name": "Consulta para obtener los coches vendidos en los ultimos siete dias",
+      "credentials": {
+        "postgres": {
+          "id": "<TO_BE_CONFIGURED>",
+          "name": "To configure (Postgres)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// items es un array de objetos JSON que vienen del nodo anterior\n\nlet html = `<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse;\">`;\n\n// Obtenemos los headers y filtramos 'id'\nconst headers = Object.keys(items[0].json).filter(h => h !== 'id');\n\n// Fila de encabezados\nhtml += `<tr style=\"background-color: #f2f2f2;\">`;\nheaders.forEach(header => {\n    html += `<th>${header}</th>`;\n});\nhtml += `</tr>`;\n\n// Añadimos cada fila de datos\nitems.forEach(item => {\n    html += `<tr>`;\n    headers.forEach(header => {\n        let value = item.json[header] ?? '';\n\n        // Convertimos las fechas a YYYY-MM-DD si el header contiene \"fecha\"\n        if (value && header.toLowerCase().includes('fecha')) {\n            value = new Date(value).toISOString().split('T')[0];\n        }\n\n        html += `<td>${value}</td>`;\n    });\n    html += `</tr>`;\n});\n\nhtml += `</table>`;\n\n// Retornamos la tabla\nreturn [{ json: { htmlBody: html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "bc5b24a4-66a5-48aa-92f3-04b624df4b0f",
+      "name": "Codigo para crear una tabla con los datos de la consulta lista para mandar por gmail"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Consulta para obtener los coches vendidos en los ultimos siete dias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consulta para obtener los coches vendidos en los ultimos siete dias": {
+      "main": [
+        [
+          {
+            "node": "Codigo para crear una tabla con los datos de la consulta lista para mandar por gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Codigo para crear una tabla con los datos de la consulta lista para mandar por gmail": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "300470af-c980-4d1f-87b6-5d80809c15da",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "Bn2RXESyYZDKrZNK",
+  "tags": []
+}
