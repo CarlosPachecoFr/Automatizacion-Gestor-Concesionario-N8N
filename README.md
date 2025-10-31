@@ -24,7 +24,7 @@ Este reporte ofrece una visión clara del rendimiento semanal y puede personaliz
 Este flujo constituye el núcleo de la automatización. Permite al **gestor del concesionario interactuar directamente con la base de datos** mediante lenguaje natural, enviando mensajes al bot de Telegram.  
 El sistema utiliza un **agente de inteligencia artificial (AI Agent)** para interpretar las peticiones y convertirlas en consultas SQL dinámicas, haciendo posible la gestión del inventario sin necesidad de escribir comandos técnicos.
 
-![Workflow Automatizacion Concesionario](./images/Workflow-Automatizacion-Concesionario.png)
+![Workflow Automatizacion Concesionario](./img/Workflow-Automatizacion-Concesionario.png)
 
 ---
 
@@ -72,13 +72,14 @@ El sistema utiliza un **agente de inteligencia artificial (AI Agent)** para inte
 
 Este flujo se ejecuta automáticamente todos los lunes a las 8:00 a.m. y genera un reporte HTML con las ventas de los últimos 7 días, que se envía por correo al responsable del concesionario.
 
-![Workflow Reportes Semanales](./imag/Workflow-Reportes-Semanales-Ventas-Concesionario.png)
+![Workflow Reportes Semanales](./img/Workflow-Reportes-Semanales-Ventas-Concesionario.png)
 
 ---
 
 ### 📨 Resultado
 
 Cada semana, el gestor recibe un correo con una tabla que muestra:
+![Workflow Reportes Semanales](./img/Gmail-Con-Reportes-Semanales.png)
 
 ---
 
