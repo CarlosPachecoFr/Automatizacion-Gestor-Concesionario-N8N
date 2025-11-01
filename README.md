@@ -18,16 +18,6 @@ El flujo es capaz de **interpretar texto libre**, **gestionar imágenes** y **re
 Cada semana, el sistema **genera y envía automáticamente un reporte HTML** con las ventas realizadas durante los últimos siete días al correo electrónico del responsable del concesionario.  
 Este reporte ofrece una visión clara del rendimiento semanal y puede personalizarse fácilmente para incluir métricas adicionales.
 
-##
-
-### 🖥️ Complemento Visual: Dashboard del Gestor
-
-Este proyecto cuenta con un **panel visual complementario** desarrollado en **Angular + TailwindCSS + ApexCharts**, que permite al gestor visualizar de forma gráfica las **ventas**, el **inventario** y el **stock** en tiempo real.  
-El dashboard se conecta directamente a los **endpoints HTTP creados en n8n**, los cuales exponen los datos del concesionario en formato **JSON**.
-
-📊 **Repositorio del panel visual:**  
-👉 [Dashboard-Gestor-Concesionario](https://github.com/CarlosPachecoFr/Dashboard-Gestor-Concesionario)
-
 ---
 ## ⚙️ Workflow Principal: Gestión Inteligente vía Telegram
 
@@ -119,6 +109,16 @@ Cada semana, el gestor recibe un correo con una tabla que muestra:
    - Gmail OAuth2
 4. Activa ambos workflows desde el panel de n8n.
 5. Comienza a interactuar con tu bot de Telegram. 🚀
+
+---
+
+## 🖥️ Complemento Visual: Dashboard del Gestor
+
+Este proyecto cuenta con un **panel visual complementario** desarrollado en **Angular + TailwindCSS + ApexCharts**, que permite al gestor visualizar de forma gráfica las **ventas**, el **inventario** y el **stock** en tiempo real.  
+El dashboard se conecta directamente a los **endpoints HTTP creados en n8n**, los cuales exponen los datos del concesionario en formato **JSON**.
+
+📊 **Repositorio del panel visual:**  
+👉 [Dashboard-Gestor-Concesionario](https://github.com/CarlosPachecoFr/Dashboard-Gestor-Concesionario)
 
 ---
 
